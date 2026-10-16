@@ -1,0 +1,99 @@
+{
+	email admin@muhammadrofiq.my.id
+	admin off
+	log {
+		output stdout
+		format json
+	}
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security max-age=31536000; includeSubDomains; preload
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		X-XSS-Protection 1; mode=block
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
+:80 {
+	handle /up {
+		respond OK 200
+	}
+	handle {
+		redir https://{host}{uri} permanent
+	}
+}
+
+router.muhammadrofiq.my.id {
+	import security_headers
+	request_body {
+		max_size 50MB
+	}
+	handle {
+		reverse_proxy 9router-87s8-niner-router-1:20128 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	log {
+		output stdout
+		format json
+	}
+}
+
+# baznas/portal: web_baznas-backend=172.20.0.2:3001, web_baznas-frontend=172.20.0.3:3002
+muhammadrofiq.my.id, portal.muhammadrofiq.my.id, baznas.muhammadrofiq.my.id {
+	import security_headers
+	request_body {
+		max_size 50MB
+	}
+	handle /up {
+		respond OK 200
+	}
+	handle /api/* {
+		reverse_proxy 172.20.0.2:3001 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	handle /uploads/* {
+		reverse_proxy 172.20.0.2:3001 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	handle {
+		reverse_proxy 172.20.0.3:3002 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	log {
+		output stdout
+		format json
+	}
+}
+
+# agent: multica-backend=172.21.0.3:8080, multica-frontend=172.21.0.4:3000
+agent.muhammadrofiq.my.id {
+	import security_headers
+	handle /health {
+		reverse_proxy 172.21.0.3:8080
+	}
+	handle /ws {
+		reverse_proxy 172.21.0.3:8080 {
+			flush_interval -1
+		}
+	}
+	handle /api/daemon/ws {
+		reverse_proxy 172.21.0.3:8080 {
+			flush_interval -1
+		}
+	}
+	handle {
+		reverse_proxy 172.21.0.4:3000
+	}
+	log {
+		output stdout
+		format json
+	}
+}

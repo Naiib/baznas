@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="icon" type="image/png" href="/baznas-logo.png" />
+    <link rel="apple-touch-icon" href="/baznas-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="BAZNAS Kota Tangerang - Sistem Data Center, Manajemen Zakat & Layanan Pengajuan Bantuan Mustahik Online" />
+    <meta property="og:title" content="BAZNAS Kota Tangerang - Portal Layanan & Data Center" />
+    <meta property="og:description" content="Sistem Data Center, Manajemen Zakat & Layanan Pengajuan Bantuan Mustahik Online BAZNAS Kota Tangerang" />
+    <meta property="og:image" content="/baznas-logo.png" />
+    <meta property="og:type" content="website" />
+    <title>BAZNAS Kota Tangerang - Portal Layanan & Data Center</title>
+
+    <!-- DNS Prefetch and Preconnect for External Typography -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-background text-foreground antialiased min-h-screen">
+    <div id="root">
+      <div style="width:100vw;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#09121a;font-family:'Plus Jakarta Sans',sans-serif;color:#ffffff;text-align:center;padding:20px;box-sizing:border-box;">
+        <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+          <div style="width:72px;height:72px;border-radius:50%;background:rgba(5,150,105,0.15);display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(16,185,129,0.25);">
+            <img src="/baznas-logo.png" alt="BAZNAS" style="width:48px;height:48px;object-fit:contain;" />
+          </div>
+          <div style="position:absolute;width:84px;height:84px;border:3px solid transparent;border-top-color:#10b981;border-right-color:#10b981;border-radius:50%;animation:baznas-spin 1.2s cubic-bezier(0.5,0,0.5,1) infinite;"></div>
+        </div>
+        <h2 style="font-size:16px;font-weight:800;letter-spacing:1px;color:#ffffff;margin:0 0 6px 0;text-transform:uppercase;">
+          BAZNAS KOTA TANGERANG
+        </h2>
+        <p style="font-size:12px;color:#a7f3d0;margin:0 0 16px 0;opacity:0.85;">
+          Memuat Sistem & Layanan Digital...
+        </p>
+        <div style="width:160px;height:3px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;position:relative;">
+          <div style="width:60px;height:100%;background:#10b981;border-radius:3px;position:absolute;animation:baznas-bar 1.5s ease-in-out infinite;"></div>
+        </div>
+      </div>
+      <style>
+        @keyframes baznas-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes baznas-bar {
+          0% { left: -60px; }
+          100% { left: 160px; }
+        }
+      </style>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

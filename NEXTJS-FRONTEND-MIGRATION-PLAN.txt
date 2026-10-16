@@ -1,0 +1,138 @@
+NEXT.JS FRONTEND MIGRATION IMPLEMENTATION PLAN
+
+GOAL
+Memigrasikan frontend BAZNAS Data Center dari React + Vite + JavaScript ke Next.js 16 App Router + React 19 + TypeScript strict + Tailwind CSS v4, tanpa menghentikan backend Express/PostgreSQL atau mengubah perilaku produk yang sudah live.
+
+ARCHITECTURE
+Gunakan migrasi paralel (blue/green): buat aplikasi Next baru pada frontend-next/, sementara Vite lama dan Express API tetap berjalan sampai seluruh rute penting lolos parity check. Next menangani rendering, routing, metadata, dan static assets; Express di port 3001 tetap menjadi satu-satunya sumber API dan autentikasi selama fase ini. Halaman terautentikasi tetap memakai Client Components pada batas interaktif; gunakan Server Components hanya untuk layout, metadata, dan elemen yang tidak membutuhkan token browser.
+
+TECH STACK
+Next.js 16 App Router, React 19, TypeScript 5.8 strict, Tailwind CSS v4 dengan @tailwindcss/postcss, Vitest + Testing Library, Express 5 API existing, React Leaflet 5.
+
+GLOBAL CONSTRAINTS
+- Jangan menghapus atau menulis ulang src/, server/, atau deployment Vite lama sebelum versi Next melewati UAT.
+- Jangan mengklaim ada 34 rute/artikel atau menggunakan generateStaticParams; proyek saat ini tidak memilikinya. Terapkan SSG hanya pada rute publik yang benar-benar statis setelah rute tersebut ada.
+- Pertahankan API Express: /api/auth/*, /api/mustahik/*, /api/penyaluran/by-kecamatan, dan /api/data/overview.
+- Konsep 3 adalah beranda Penyaluran tunggal pada /penyaluran; jangan membuat mode preview atau query concept baru.
+- Poin dashboard periode/asnaf/program belum termasuk migrasi ini. Hanya siapkan fondasi typed API agar fitur itu dapat ditambahkan setelah cutover.
+- Semua akses token browser harus berada dalam Client Components. Jangan membaca localStorage dalam Server Component.
+- Peta React Leaflet harus dimuat dengan dynamic(..., { ssr: false }).
+- Gunakan NEXT_PUBLIC_API_BASE_URL untuk URL backend, tanpa hard-code IP/domain.
+
+TARGET ROUTE MAP
+- penyaluran -> /penyaluran -> authenticated Client dashboard di shared App Router layout
+- mustahik -> /penyaluran/mustahik -> authenticated interactive
+- program_bantuan -> /penyaluran/program -> authenticated interactive
+- peta_sebaran -> /penyaluran/peta -> authenticated, map client-only
+- laporan_penyaluran -> /penyaluran/laporan -> authenticated interactive
+- login -> /login -> client form
+- portal public -> / -> server-rendered public entry
+
+TASK 1 — ESTABLISH AN ISOLATED NEXT APPLICATION WITHOUT CHANGING PRODUCTION
+Files:
+- Create frontend-next/package.json
+- Create frontend-next/next.config.ts
+- Create frontend-next/tsconfig.json
+- Create frontend-next/postcss.config.mjs
+- Create frontend-next/.env.example
+- Create frontend-next/app/layout.tsx
+- Create frontend-next/app/globals.css
+
+1. Create the Next application in frontend-next/; do not replace the root package.json.
+2. Install next@16, react@19, react-dom@19, typescript@5.8, @types/react, @types/node, tailwindcss@4, @tailwindcss/postcss, vitest, Testing Library, lucide-react, leaflet, and react-leaflet.
+3. Set tsconfig.json with strict, noUncheckedIndexedAccess, noImplicitOverride, and moduleResolution: bundler.
+4. Configure PostCSS with only @tailwindcss/postcss and move current BAZNAS design tokens from src/index.css into app/globals.css.
+5. Add .env.example:
+   NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+6. Add scripts: dev, build, start, lint, test, typecheck.
+7. Acceptance: npm run typecheck, npm run test, npm run build pass inside frontend-next/.
+
+TASK 2 — ADD TYPED API BOUNDARY AND AUTH-SAFE CLIENT STATE
+Files:
+- Create frontend-next/lib/api/types.ts
+- Create frontend-next/lib/api/client.ts
+- Create frontend-next/lib/auth/session.ts
+- Create frontend-next/components/auth/AuthProvider.tsx
+- Create frontend-next/components/auth/RequireAuth.tsx
+- Test frontend-next/lib/api/client.test.ts
+
+1. Define ApiEnvelope<T>, CurrentUser, Mustahik, PenyaluranByKecamatan, API error types from current Express response shapes.
+2. Implement one typed apiFetch<T>(path, options): prefix NEXT_PUBLIC_API_BASE_URL, add JSON headers, attach existing bearer token only in browser code, throw typed error for non-2xx.
+3. Preserve POST /api/auth/login initially. Keep token handling in session.ts; do not attempt RSC auth until Express uses secure HTTP-only cookies.
+4. AuthProvider calls /api/auth/me after hydration and exposes user, isLoading, login, logout.
+5. RequireAuth redirects unauthenticated users to /login?next=<path>.
+6. Test successful JSON response, API error normalization, missing-token behavior.
+
+TASK 3 — BUILD THE SHARED PENYALURAN APP ROUTER SHELL
+Files:
+- Create frontend-next/app/(penyaluran)/layout.tsx
+- Create frontend-next/app/(penyaluran)/penyaluran/layout.tsx
+- Create frontend-next/components/penyaluran/PenyaluranShell.tsx
+- Create frontend-next/components/penyaluran/PenyaluranTopNav.tsx
+- Create frontend-next/components/penyaluran/penyaluran-nav.ts
+- Test frontend-next/components/penyaluran/PenyaluranTopNav.test.tsx
+
+1. Port navigation and spacing tokens from current PenyaluranTopNav.jsx and PenyaluranShell.jsx to strict TypeScript.
+2. Use next/link and usePathname; do not retain old activePage state machine or browser-history routing.
+3. Implement Beranda, Data Mustahik, Program 5 Pilar, Peta Sebaran, Laporan using target route map.
+4. Use RequireAuth around authenticated Penyaluran layout.
+5. Acceptance: active nav follows URL refreshes and direct deep links.
+
+TASK 4 — PORT CONCEPT 3 AS THE ONLY /PENYALURAN DASHBOARD
+Files:
+- Create frontend-next/app/(penyaluran)/penyaluran/page.tsx
+- Create frontend-next/components/penyaluran/dashboard/ConceptThreeDashboard.tsx
+- Create frontend-next/components/penyaluran/dashboard/ImpactMetrics.tsx
+- Create frontend-next/components/penyaluran/dashboard/ActionRail.tsx
+- Create frontend-next/components/penyaluran/map/RealKecamatanMap.tsx
+- Create frontend-next/components/penyaluran/map/map-data.ts
+- Copy src/data/tangerangKecamatan.js to typed frontend-next/data/tangerangKecamatan.ts
+- Test frontend-next/app/(penyaluran)/penyaluran/page.test.tsx
+
+1. Port only approved Concept 3 visual system. Do not port ConceptOneDashboard, PenyaluranConceptSwitcher, query-string preview logic.
+2. Keep RealKecamatanMap as client-only dynamic import:
+   const RealKecamatanMap = dynamic(() => import('@/components/penyaluran/map/RealKecamatanMap'), { ssr: false });
+3. Preserve OSM polygon geometry, map legend, selected-kecamatan card, explicit demo fallback if /api/penyaluran/by-kecamatan returns no rows.
+4. Keep actions as real Next links to target routes.
+5. Acceptance: /penyaluran renders Concept 3 alone; no switcher, no ?concept=, no Concept 1 bundle import.
+
+TASK 5 — MIGRATE REMAINING PENYALURAN ROUTES INCREMENTALLY
+Files:
+- Create frontend-next/app/(penyaluran)/penyaluran/mustahik/page.tsx
+- Create frontend-next/app/(penyaluran)/penyaluran/program/page.tsx
+- Create frontend-next/app/(penyaluran)/penyaluran/peta/page.tsx
+- Create frontend-next/app/(penyaluran)/penyaluran/laporan/page.tsx
+- Create corresponding typed components under frontend-next/components/penyaluran/
+
+1. Port one route per commit: Mustahik, Program, Peta, then Laporan.
+2. Convert props, API responses, filters, tables, dialogs, form state to explicit TypeScript interfaces; prohibit any.
+3. Use Server Components for route frames and client islands only for tables, forms, charts, dialogs, Leaflet.
+4. Compare each route against old Vite page: data fields, role access, submissions, loading, error, empty state.
+
+TASK 6 — PREPARE DEPLOYMENT, REVERSE PROXY, AND SAFE CUTOVER
+Files:
+- Create frontend-next/Dockerfile or frontend-next/ecosystem.config.cjs
+- Create frontend-next/deploy-next.ps1
+- Create docs/nextjs-cutover-runbook.md
+- Modify later, not before UAT: Nginx vhost for muhammadrofiq.my.id
+
+1. Run Next on new internal port 3002 under PM2 name baznas-frontend-next; leave Express at 3001.
+2. Configure Nginx proxy: frontend to 127.0.0.1:3002 and /api/ to 127.0.0.1:3001.
+3. Test staging hostname or temporary Nginx location first; do not overwrite /var/www/baznas-tangkot-v2 until UAT approval.
+4. Set NEXT_PUBLIC_API_BASE_URL=/api in production.
+5. Document rollback: one Nginx upstream change back to Vite static files; retain old deployment at least one release cycle.
+
+TASK 7 — QUALITY GATES AND HANDOFF
+1. Require npm run typecheck, npm run lint, npm run test, npm run build from frontend-next/ on every migration PR.
+2. Capture desktop and mobile screenshots for /penyaluran, /penyaluran/mustahik, /penyaluran/program, /penyaluran/peta, /penyaluran/laporan.
+3. Verify login, session refresh, logout, direct deep link, role denial, API error, empty response, Leaflet failure states.
+4. Only after UAT, change production Nginx upstream and monitor /api/health, Next process logs, browser console errors.
+
+EXPLICITLY DEFERRED UNTIL AFTER NEXT CUTOVER
+- Dashboard filter 7 hari, 30 hari, dan 1 tahun.
+- Agregasi penyaluran per asnaf dan per program.
+- Tren periode, prioritas tindakan berdasarkan periode, dan peta kecamatan mengikuti filter.
+- Endpoint Express baru untuk agregasi tersebut.
+
+Fitur di atas adalah increment produk terpisah karena membutuhkan definisi terverifikasi untuk asnaf, sumber data program, semantik field tanggal, serta perilaku data kosong/null.

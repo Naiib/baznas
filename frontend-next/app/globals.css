@@ -1,0 +1,288 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #09090b;
+    --card: #ffffff;
+    --card-foreground: #09090b;
+    --popover: #ffffff;
+    --popover-foreground: #09090b;
+    --primary: #059669;
+    --primary-foreground: #ffffff;
+    --secondary: #f4f4f5;
+    --secondary-foreground: #18181b;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --accent: #f4f4f5;
+    --accent-foreground: #18181b;
+    --destructive: #ef4444;
+    --destructive-foreground: #fafafa;
+    --border: #e4e4e7;
+    --input: #e4e4e7;
+    --ring: #059669;
+    --radius: 0.625rem;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Replace browser defaults with a consistent, visible keyboard focus ring. */
+button:focus,
+button:focus-visible,
+[role="button"]:focus,
+[role="button"]:focus-visible,
+a:focus,
+a:focus-visible,
+input:focus,
+input:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: 3px solid #059669 !important;
+  outline-offset: 2px;
+}
+
+/* Ensure all clickable and interactive elements have cursor-pointer */
+button,
+[role="button"],
+[role="tab"],
+select,
+summary,
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"],
+a {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+select:disabled {
+  cursor: not-allowed !important;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Highly visible scrollbar for Queue sidebar */
+.queue-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+.queue-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.queue-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+.queue-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 9999px;
+}
+
+.queue-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Leaflet maps styling container */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.leaflet-container .leaflet-interactive {
+  transition: fill 180ms ease-out, fill-opacity 180ms ease-out, stroke 180ms ease-out, stroke-width 180ms ease-out;
+}
+
+/* Leaflet applies a browser focus rectangle to SVG areas after click. The selected
+   area already has a distinct green stroke, so the extra rectangle adds noise. */
+.leaflet-container .leaflet-interactive:focus,
+.leaflet-container .leaflet-interactive:focus-visible {
+  outline: none;
+}
+
+@keyframes map-detail-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.map-detail-enter {
+  animation: map-detail-enter 180ms ease-out both;
+}
+
+@keyframes map-focus-card-enter {
+  from { opacity: 0; transform: translateY(12px) scale(.96); }
+  60% { opacity: 1; }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.map-focus-card {
+  animation: map-focus-card-enter 280ms cubic-bezier(.2, .85, .3, 1) both;
+}
+
+.map-map-legend {
+  bottom: 1rem;
+}
+
+.map-focus-card-compact {
+  bottom: 1rem;
+  left: 50% !important;
+  top: auto !important;
+  transform: translateX(-50%);
+}
+
+.map-map-legend-compact {
+  bottom: auto;
+  top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaflet-container .leaflet-interactive,
+  .map-detail-enter,
+  .map-focus-card { animation: none; transition: none; }
+}
+
+@keyframes mustahik-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mustahik-toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mustahik-profile-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mustahik-sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modal-pop-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes backdrop-fade-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes page-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-pop {
+  animation: modal-pop-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.backdrop-fade {
+  animation: backdrop-fade-enter 180ms ease-out both;
+}
+
+.page-enter {
+  animation: page-content-enter 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mustahik-row {
+  animation: mustahik-row-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mustahik-toast {
+  animation: mustahik-toast-enter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mustahik-profile-enter {
+  animation: mustahik-profile-enter 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mustahik-overlay {
+  animation: backdrop-fade-enter 180ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mustahik-row,
+  .mustahik-toast,
+  .mustahik-profile-enter,
+  .mustahik-decision-sheet,
+  .mustahik-overlay {
+    animation: none;
+  }
+}

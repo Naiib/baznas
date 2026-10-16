@@ -1,0 +1,30 @@
+﻿services:
+  backend:
+    container_name: baznas-backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - UPLOAD_DIR=/app/uploads
+      - PENYALURAN_ARTIFACT_DIR=/app/private-artifacts
+    volumes:
+      - ./uploads:/app/uploads
+      - ./private-artifacts:/app/private-artifacts
+      - ./.env:/app/.env:ro
+
+  frontend:
+    container_name: baznas-frontend
+    build:
+      context: ./frontend-next
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+    depends_on:
+      - backend
