@@ -45,9 +45,18 @@ export { penerimaanApi };
 // On server SSR, use internal port 3001
 export const getApiBase = () => {
   if (typeof window !== 'undefined') {
-    // On localhost in browser, default to backend port 3001 if no custom env is set
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+    // Check if custom env is provided
+    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+      return process.env.NEXT_PUBLIC_API_BASE_URL;
+    }
+    // On localhost/127.0.0.1 in browser, backend Express always runs on port 3001
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      const port = window.location.port;
+      // If frontend is running on 3000 or anything other than 3001, direct API calls to backend port 3001
+      if (port !== '3001') {
+        return `${window.location.protocol}//${host}:3001`;
+      }
     }
     return '';
   }
