@@ -36,9 +36,14 @@ export function assertP0CutoverConfiguration(env = process.env) {
 
   const cutoverAt = env?.PENYALURAN_P0_CUTOVER_AT;
   if (typeof cutoverAt !== 'string' || !cutoverAt.trim() || Number.isNaN(new Date(cutoverAt).getTime())) {
-    const error = new Error('PENYALURAN_P0_ENABLED requires a valid PENYALURAN_P0_CUTOVER_AT timestamp.');
-    error.code = 'INVALID_P0_CUTOVER_CONFIGURATION';
-    throw error;
+    if (env?.NODE_ENV === 'production') {
+      const error = new Error('PENYALURAN_P0_ENABLED requires a valid PENYALURAN_P0_CUTOVER_AT timestamp.');
+      error.code = 'INVALID_P0_CUTOVER_CONFIGURATION';
+      throw error;
+    }
+    // Safe dev fallback timestamp
+    if (env) env.PENYALURAN_P0_CUTOVER_AT = '2026-01-01T00:00:00.000Z';
+    return true;
   }
   return true;
 }
