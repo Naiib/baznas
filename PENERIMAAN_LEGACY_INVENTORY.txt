@@ -1,0 +1,173 @@
+# INVENTORY & FREEZE REGISTRY: LEGACY DIVISI PENERIMAAN
+Generated: 2026-09-07
+Status: FROZEN / READ-ONLY ACTIVE
+Scope: Divisi Penerimaan ZIS (Zakat, Infak, Sedekah)
+
+================================================================================
+1. MEKANISME FREEZE & ROUTE-LEVEL FEATURE FLAG (READ-ONLY)
+================================================================================
+- Route-Level Freeze Middleware (Backend):
+  * File: server/legacy-freeze.js & server/index.js
+  * Middleware: app.use('/api/legacy/penerimaan', legacyPenerimaanReadOnlyGuard)
+  * Status Endpoint: GET /api/legacy/penerimaan/status -> { frozen: true, readOnly: true, message: ... }
+  * Namespace /api/penerimaan/*: DIBIARKAN TERBUKA dan tidak dibekukan agar dapat digunakan secara penuh oleh modul baru (Task 2-16).
+  * Perilaku: Memblokir mutasi (POST/PUT/PATCH/DELETE) pada namespace legacy (/api/legacy/penerimaan) selama migrasi berlangsung.
+- Route-Level Feature Flag (Frontend):
+  * File: src/utils/legacyFreeze.js & src/App.jsx
+  * Flag: isLegacyPenerimaanReadOnly() (default true)
+  * Route Wrapper: Menampilkan banner visual "Mode Baca-Saja" di tingkat route untuk rute /penerimaan, /muzakki, /laporan-penerimaan.
+  * Form & Action Guard: Tombol "Tambah Penerimaan" dan "Tambah Muzakki" dinonaktifkan (disabled), dan form submit handler diblokir.
+- Kebijakan Pembersihan:
+  * TIDAK ADA modul, komponen, atau rute lama yang dihapus pada Task 1-16.
+  * Modul lama dipertahankan berdampingan hingga Task 17 (Legacy cutover and cleanup).
+
+================================================================================
+2. INVENTARISASI SELURUH RUTE LAMA (LEGACY ROUTES)
+================================================================================
+A. Rute Frontend Aplikasi (src/App.jsx & ROUTE_MAP / PATH_TO_PAGE):
+   1. /penerimaan
+      - Page Key: 'penerimaan'
+      - Komponen: PenerimaanDashboard (src/components/PenerimaanDashboard.jsx)
+      - Status: Read-Only / Frozen
+   2. /muzakki
+      - Page Key: 'muzakki'
+      - Komponen: MuzakkiPage (src/components/MuzakkiPage.jsx)
+      - Status: Read-Only / Frozen
+   3. /laporan-penerimaan (atau laporan_penerimaan)
+      - Page Key: 'laporan_penerimaan'
+      - Komponen: LaporanPenerimaanPage (src/components/LaporanPenerimaanPage.jsx)
+      - Status: Read-Only / Frozen
+   4. Redireksi Role:
+      - Role 'penerimaan' diarahkan default ke rute 'penerimaan' saat login (src/App.jsx:233-235).
+
+B. Menu Navigasi (src/components/Navbar.jsx):
+   - Menu Top-Level untuk userRole === 'penerimaan':
+     * Beranda (page: 'utama')
+     * Data Muzakki (page: 'muzakki')
+     * Penerimaan ZIS (dropdown: 'Dashboard Penerimaan', 'Laporan Penerimaan ZIS')
+     * UPZ & Mitra (dropdown: 'Data Unit Pengumpul Zakat', 'Laporan Setoran UPZ', 'Kerjasama Lembaga & CSR')
+     * Export PDF (modal trigger)
+   - Menu Top-Level untuk userRole === 'admin':
+     * Dropdown 'Penerimaan ZIS' ('Dashboard Penerimaan', 'Data Muzakki', 'Laporan Penerimaan ZIS').
+
+C. Frontend Next.js (frontend-next/):
+   - Rute App Router /penerimaan/* belum ada (akan dibangun mulai Task 6).
+   - types.ts mencakup tipe role 'penerimaan' (frontend-next/lib/api/types.ts:13).
+
+================================================================================
+3. INVENTARISASI SELURUH KOMPONEN LAMA (LEGACY COMPONENTS)
+================================================================================
+1. src/components/PenerimaanDashboard.jsx (644 baris):
+   - Menampilkan: KPI Cards (Total Penerimaan, Bulan Ini, Total Muzakki, Rata-rata/Muzakki, Capaian Target).
+   - Visualisasi: BarChart tren 12 bulan (recharts), PieChart komposisi jenis ZIS.
+   - Tabel: Transaksi penerimaan terbaru (8 transaksi mock).
+   - Dialog/Sheet: Tambah Penerimaan & Lihat Semua Transaksi (kini dibekukan/read-only).
+2. src/components/MuzakkiPage.jsx (442 baris):
+   - Menampilkan: KPI Statistik Muzakki (Total, Aktif, Pasif, Total Kontribusi).
+   - Filter & Tabel: Pencarian nama/NIK/ID, filter tipe (Individu/Lembaga), filter status.
+   - Dialog/Sheet: Form pendaftaran Muzakki Baru (kini dibekukan/read-only).
+3. src/components/LaporanPenerimaanPage.jsx (340 baris):
+   - Menampilkan: Rekapitulasi laporan penerimaan ZIS dengan filter tanggal, jenis dana, dan sumber dana.
+   - Ekspor: Tombol export laporan ke PDF dan Excel secara client-side.
+4. src/data/penerimaanData.js:
+   - Data statis penerimaan: PENERIMAAN_METRICS, JENIS_ZAKAT_DATA, SUMBER_PENERIMAAN,
+     PENERIMAAN_TRANSACTIONS, PENERIMAAN_CHART_12M, MUZAKKI_LIST, data amil penerimaan.
+5. src/data/dashboardData.js:
+   - Data agregat bulanan penerimaan ZIS (penerimaan vs penyaluran) dan transaksi muzakki.
+
+================================================================================
+4. INVENTARISASI SELURUH ENDPOINT LAMA (LEGACY ENDPOINTS)
+================================================================================
+- server/index.js:
+  * Tidak ada endpoint CRUD legacy /api/penerimaan/* sebelumnya; seluruh data lama bersifat in-memory/mock di client.
+  * Autentikasi /api/auth/login memvalidasi akun dengan role: 'penerimaan'.
+  * Namespace /api/penerimaan/* TIDAK dibekukan dan disediakan khusus untuk modul Penerimaan baru.
+  * Endpoint legacy guard:
+    - GET /api/legacy/penerimaan/status (Memeriksa status freeze modul legacy).
+    - Middleware app.use('/api/legacy/penerimaan', legacyPenerimaanReadOnlyGuard) (Menolak mutasi POST/PUT/PATCH/DELETE pada rute legacy selama masa migrasi).
+
+================================================================================
+5. INVENTARISASI SCHEMA & TABEL (LEGACY DATABASE SCHEMA)
+================================================================================
+- server/schema.sql:
+  * Belum ada tabel database relasional khusus penerimaan ZIS (misal: penerimaan_transactions, muzakki, reconciliation_batches).
+  * Tabel users:
+    - Kolom role VARCHAR(50) DEFAULT 'penyaluran' (komentar line 189 mencantumkan role 'penerimaan').
+    - Kolom division VARCHAR(100) DEFAULT 'Divisi Penyaluran'.
+    - Kolom level VARCHAR(20) DEFAULT 'staff'.
+  * Desain schema PostgreSQL baru untuk penerimaan akan didefinisikan secara komprehensif pada Task 3.
+
+================================================================================
+6. INVENTARISASI SEED RECORDS (LEGACY SEED DATA)
+================================================================================
+- server/db.js (Tabel users default seeding):
+  * Akun amil penerimaan:
+    - Name: 'Siti Rahmah, M.E (Kabid Penerimaan)'
+    - Email: 'penerimaan@baznas.go.id'
+    - Password: 'penerimaan123'
+    - Role: 'penerimaan'
+    - Division: 'Bidang Pengumpulan & ZIS'
+    - Level: 'staff' (dapat dinaikkan menjadi 'leader'/'admin')
+    - Avatar: Unsplash profile image
+- server/seed_data.js:
+  * Tidak memiliki seed data operasional transaksi penerimaan; hanya narasi laporan ("rasio penerimaan manfaat per kecamatan").
+
+================================================================================
+7. INVENTARISASI SELURUH ASSET LAMA (LEGACY ASSETS)
+================================================================================
+1. Asset Gambar & Logo:
+   - src/assets/baznas-logo.png (Logo resmi BAZNAS digunakan di header dashboard & export).
+   - public/baznas-logo.png & public/favicon.png / favicon.svg.
+   - src/assets/hero.png (Hero visual ilustrasi portal).
+2. Asset Bundle Dist Build:
+   - dist/assets/PenerimaanDashboard-*.js (Compiled bundle dashboard penerimaan).
+   - dist/assets/MuzakkiPage-*.js (Compiled bundle data muzakki).
+   - dist/assets/LaporanPenerimaanPage-*.js (Compiled bundle laporan penerimaan).
+   - dist/assets/penerimaanData-*.js (Compiled bundle data mock penerimaan).
+3. Asset Ikon Vektor (lucide-react):
+   - WalletIcon, CalendarIcon, UsersIcon, TrendingUpIcon, TargetIcon, Download, Plus, Search, CheckCircle2, FileText, FileSpreadsheet, Building, Building2.
+4. Karakteristik Asset:
+   - Modul lama tidak bergantung pada bitmap biner khusus yang terisolasi; seluruh UI dibangun menggunakan kombinasi SVG, Tailwind CSS tokens, dan HTML components.
+
+================================================================================
+8. INTEGRITAS MIGRASI & RENCANA CUTOVER
+================================================================================
+- Task 1-11: Semua artefak di atas TETAP ADA, DIJAGA, dan TIDAK DIHAPUS.
+- Status Freeze: READ-ONLY AKTIF pada antarmuka pengguna dan endpoint mutasi.
+- Task 12 (cutover final): Validasi paritas, cutover rute, dan pembersihan dilakukan dalam Task 12.
+
+================================================================================
+9. TASK 12 CUTOVER EVIDENCE (TASK 1)
+================================================================================
+- Pre-cutover rollback snapshot: Git SHA `1136b3bc990f459d387ebb0df4c4472f73cac1e6` (Task 11 complete).
+- Legacy operational source: NOT FOUND. The legacy inventory identifies `src/data/penerimaanData.js`,
+  `src/data/dashboardData.js`, and the legacy components as client-side static/mock data; there is no
+  legacy Penerimaan database table or CRUD endpoint to export. The new PostgreSQL table is therefore
+  not compared to fabricated legacy totals.
+- Parity result at 2026-09-12: `not-applicable` pending an authoritative legacy export.
+- Repeatable checker: `node scripts/penerimaan-parity.js --migrated migrated.json` emits the migrated
+  grouping and an explicit `not-applicable` result. When a read-only authoritative legacy export exists,
+  add `--legacy legacy.json` to compare by transaction date, fund type, channel, and canonical status.
+- Detailed evidence and rollback procedure: `docs/runbooks/penerimaan-cutover.md`.
+
+================================================================================
+10. TASK 12 ROUTE CUTOVER EVIDENCE (TASK 2)
+================================================================================
+- Ownership decision: production Penerimaan routes are owned by the `frontend-next` Next.js
+  application. The repository-root Vite shell is a separate legacy application and does not provide
+  a cross-app redirect layer.
+- Canonical active destinations are `/penerimaan`, `/penerimaan/muzakki`, and `/penerimaan/laporan`,
+  as defined by `frontend-next/components/penerimaan/penerimaan-nav.ts` and its App Router pages.
+- Removed legacy direct links from `src/components/Navbar.jsx` and `src/components/QuickMenu.jsx`.
+  The legacy role login branch now performs a full navigation to `/penerimaan`.
+- Removed legacy route ownership and imports from `src/App.jsx`; removed unused legacy route components:
+  `src/components/PenerimaanDashboard.jsx`, `src/components/MuzakkiPage.jsx`,
+  `src/components/LaporanPenerimaanPage.jsx`, and `src/utils/legacyFreeze.js`.
+- `src/data/penerimaanData.js` remains because unrelated legacy-shell pages still import shared fixtures;
+  it was not removed as an unreferenced Penerimaan-only seed.
+- Rollback snapshot retained: Git SHA `1136b3bc990f459d387ebb0df4c4472f73cac1e6`.
+- Vite-only `deploy.ps1` is retired and exits before building or publishing `dist`; releases must use
+  `deploy/release-vps.sh`, whose frontend release builds `frontend-next`. The checked Nginx contract
+  proxies `location /` to `127.0.0.1:3002`.
+- Root-shell deep links for `/penerimaan`, `/muzakki`, `/laporan-penerimaan`, and
+  `/laporan_penerimaan` resolve to a non-mutating retirement boundary with no same-origin redirect.

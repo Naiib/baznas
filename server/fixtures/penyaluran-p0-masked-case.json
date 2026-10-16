@@ -1,0 +1,222 @@
+{
+  "scenario": "p0-canonical-masked-digitalization-chain",
+  "actors": {
+    "intake_creator": {
+      "id": 101,
+      "name": "Amil Intake",
+      "email": "intake@baznas.go.id",
+      "role": "penyaluran",
+      "level": "staff",
+      "division": "Penyaluran"
+    },
+    "assessment_reviewer": {
+      "id": 102,
+      "name": "Kepala Survey",
+      "email": "survey.lead@baznas.go.id",
+      "role": "penyaluran",
+      "level": "leader",
+      "division": "Penyaluran"
+    },
+    "mpzis_creator": {
+      "id": 103,
+      "name": "Pembuat MPZIS",
+      "email": "mpzis.creator@baznas.go.id",
+      "role": "penyaluran",
+      "level": "staff",
+      "division": "Penyaluran"
+    },
+    "mpzis_submitter": {
+      "id": 115,
+      "name": "Pengaju MPZIS",
+      "email": "mpzis.submitter@baznas.go.id",
+      "role": "penyaluran",
+      "level": "staff",
+      "division": "Penyaluran"
+    },
+    "mpzis_approver_1": {
+      "id": 104,
+      "name": "Pemeriksa 1 Penyaluran",
+      "email": "approver1@baznas.go.id",
+      "role": "penyaluran",
+      "level": "staff",
+      "division": "Penyaluran"
+    },
+    "mpzis_approver_2": {
+      "id": 105,
+      "name": "Pemeriksa 2 Penyaluran",
+      "email": "approver2@baznas.go.id",
+      "role": "penyaluran",
+      "level": "staff",
+      "division": "Penyaluran"
+    },
+    "mpzis_approver_3": {
+      "id": 106,
+      "name": "Verifikator Asnaf",
+      "email": "approver3@baznas.go.id",
+      "role": "penyaluran",
+      "level": "staff",
+      "division": "Penyaluran"
+    },
+    "mpzis_approver_4": {
+      "id": 107,
+      "name": "Penanggung Jawab Program",
+      "email": "approver4@baznas.go.id",
+      "role": "penyaluran",
+      "level": "leader",
+      "division": "Penyaluran"
+    },
+    "mpzis_approver_5": {
+      "id": 108,
+      "name": "Ketua BAZNAS",
+      "email": "approver5@baznas.go.id",
+      "role": "penyaluran",
+      "level": "leader",
+      "division": "Penyaluran"
+    },
+    "ppd_creator": {
+      "id": 109,
+      "name": "Staf PPD",
+      "email": "ppd.creator@baznas.go.id",
+      "role": "penyaluran",
+      "level": "staff",
+      "division": "Penyaluran"
+    },
+    "finance_checker": {
+      "id": 110,
+      "name": "Staf Keuangan",
+      "email": "finance.checker@baznas.go.id",
+      "role": "keuangan",
+      "level": "staff",
+      "division": "Keuangan"
+    },
+    "finance_approver": {
+      "id": 111,
+      "name": "Kepala Keuangan",
+      "email": "finance.approver@baznas.go.id",
+      "role": "keuangan",
+      "level": "leader",
+      "division": "Keuangan"
+    },
+    "payment_recorder": {
+      "id": 112,
+      "name": "Kasir Penyaluran",
+      "email": "kasir@baznas.go.id",
+      "role": "keuangan",
+      "level": "staff",
+      "division": "Keuangan"
+    },
+    "payment_verifier": {
+      "id": 113,
+      "name": "Verifikator Pembayaran",
+      "email": "verifier@baznas.go.id",
+      "role": "keuangan",
+      "level": "staff",
+      "division": "Keuangan"
+    },
+    "recipient_confirmer": {
+      "id": 114,
+      "name": "Petugas Konfirmasi Lapangan",
+      "email": "confirmer@baznas.go.id",
+      "role": "penyaluran",
+      "level": "staff",
+      "division": "Penyaluran"
+    }
+  },
+  "intake": {
+    "name": "Mustahik Teladan",
+    "nik": "3671012304850001",
+    "kk_number": "3671012304850002",
+    "phone": "081298765432",
+    "address": "Jl. Merdeka No. 45",
+    "rt_rw": "02/03",
+    "kecamatan": "Tangerang",
+    "kelurahan": "Sukarasa",
+    "kabupaten_kota": "Kota Tangerang",
+    "province": "Banten",
+    "asnaf": "Fakir",
+    "program": "Kemanusiaan",
+    "marital_status": "Menikah",
+    "beneficiary_count": 3,
+    "monthly_income": 800000,
+    "monthly_expense": 1200000,
+    "distribution_purpose": "Bantuan pangan darurat keluarga prasejahtera"
+  },
+  "assessment": {
+    "husband_in_household": true,
+    "husband_name": "Mustahik Teladan",
+    "wife_in_household": true,
+    "wife_name": "Siti Hasanah",
+    "child_count": 2,
+    "house_ownership": "Kontrak",
+    "home_address": "Jl. Merdeka No. 45 RT 02 RW 03",
+    "address_matches_ktp": true,
+    "monthly_rent_amount": "350000.00",
+    "husband_occupation": "Buruh Harian Lepas",
+    "husband_monthly_income": "800000.00",
+    "wife_occupation": "Ibu Rumah Tangga",
+    "wife_monthly_income": "0.00",
+    "child_occupation": "Pelajar",
+    "child_monthly_support": "0.00",
+    "assistance_request": "Bantuan pangan darurat keluarga prasejahtera",
+    "applied_to_baznas_before": false,
+    "previous_application_year": null
+  },
+  "mpzis": {
+    "form_number": "MPZIS-2026-09-0012",
+    "mpzis_date": "2026-09-26",
+    "program_classification": "BAZNAS Tanggap Bencana",
+    "purpose": "Bantuan pangan darurat keluarga prasejahtera",
+    "asnaf": "Fakir",
+    "fund_source": "Zakat",
+    "recipient_name": "Mustahik Teladan",
+    "recipient_type": "Individu",
+    "beneficiary_count": 3,
+    "total_amount": "2500000.00"
+  },
+  "ppd": {
+    "form_number": "F-PPD-2026-0088",
+    "ppd_number": "PPD-2026-09-0123",
+    "transaction_number": "TRX-P0-20260926-001",
+    "purpose": "Penyaluran bantuan sembako dan logistik darurat",
+    "fund_source": "Zakat",
+    "payment_type": "Pembayaran",
+    "bank_name": "Bank Syariah Indonesia (BSI)",
+    "bank_account_number": "5544332211",
+    "bank_account_name": "Mustahik Teladan",
+    "rab_lines": [
+      {
+        "line_no": 1,
+        "register_number": "RAB-001",
+        "description": "Paket beras, minyak goreng, dan telur",
+        "amount": "1500000.00"
+      },
+      {
+        "line_no": 2,
+        "register_number": "RAB-002",
+        "description": "Bantuan sewa tempat tinggal 2 bulan",
+        "amount": "700000.00"
+      },
+      {
+        "line_no": 3,
+        "register_number": "RAB-003",
+        "description": "Bantuan perlengkapan sekolah anak",
+        "amount": "300000.00"
+      }
+    ]
+  },
+  "payment": {
+    "transaction_number": "TRX-P0-20260926-001",
+    "paid_amount": "2500000.00",
+    "paid_at": "2026-09-26T10:30:00.000Z",
+    "proof_filename": "bukti_transfer_bsi_001.pdf",
+    "proof_mime_type": "application/pdf"
+  },
+  "confirmation": {
+    "method": "Kunjungan Lapangan",
+    "recipient_name_snapshot": "Mustahik Teladan",
+    "confirmed_at": "2026-09-26T14:15:00.000Z",
+    "note": "Bantuan telah diserahterimakan langsung kepada mustahik di kediaman",
+    "evidence_filename": "berita_acara_serah_terima_001.pdf",
+    "evidence_mime_type": "application/pdf"
+  }
+}

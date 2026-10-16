@@ -1,0 +1,301 @@
+# Divisi Penerimaan ZIS — Implementation Plan
+
+> Dokumen ini untuk Antigravity/coding agent lokal. Jalankan task secara berurutan, satu commit kecil per task, dan jangan menghapus modul lama sebelum Task 15 selesai.
+
+## Goal
+
+Membangun ulang Divisi Penerimaan untuk seluruh penerimaan Zakat, Infak, dan Sedekah dari portal publik, transfer bank, QRIS, tunai, dan jemput zakat; dengan validasi Staff, approval Kepala Bagian untuk transaksi berisiko/nominal >= Rp10.000.000, rekonsiliasi, audit trail, dan export laporan PDF/Excel.
+
+## Architecture
+
+Gunakan namespace frontend `/penerimaan/*` dan endpoint backend `/api/penerimaan/*`. UI memakai pola workspace Penyaluran yang sudah stabil: dashboard berbasis periode, tabel desktop, card list mobile, detail drawer, sticky action, dan role-aware actions. Backend tetap menjadi sumber otorisasi; kontrol UI hanya menyembunyikan aksi yang pasti tidak diizinkan.
+
+## Tech Stack
+
+- Next.js 16 App Router, React 19, TypeScript 5.8 strict mode.
+- Tailwind CSS v4, Manrope, lucide-react, Recharts.
+- Express 5, PostgreSQL melalui repository yang sudah ada, ExcelJS, PDFKit.
+- Vitest + Testing Library untuk frontend; Node test runner untuk backend.
+
+## Global Constraints
+
+- Scope awal hanya Zakat, Infak, dan Sedekah.
+- Kanal awal: Portal publik, Transfer bank, QRIS, Tunai/Jemput Zakat.
+- Master kanal dapat ditambah, dinonaktifkan, dan diubah Admin.
+- Role: Staff Penerimaan, Kepala Bagian Penerimaan, Admin.
+- Default approval threshold: Rp10.000.000 per transaksi; dapat diubah Admin dari Pengaturan.
+- Semua transaksi digital tetap masuk antrean validasi Staff.
+- Transaksi manual, nominal >= threshold, duplikat, data tidak lengkap, dan transaksi berisiko memerlukan approval Kepala Bagian.
+- Kepala Bagian tidak boleh menyetujui transaksi yang dibuat sendiri.
+- Transaksi posted tidak boleh dihapus; koreksi dilakukan dengan reversal yang tercatat.
+- Production fail-closed ketika PostgreSQL tidak sehat; tidak boleh fallback ke SQLite/demo.
+- Semua perubahan penting memiliki audit trail immutable.
+- Tidak ada asset bitmap wajib; UI harus dapat dibangun dengan komponen HTML/CSS/SVG.
+- Setiap task berakhir dengan test yang relevan dan satu commit.
+
+## Navigation and Routes
+
+Navbar maksimal lima menu:
+
+1. `Beranda` → `/penerimaan`
+2. `Transaksi` → `/penerimaan/transaksi`
+3. `Muzakki` → `/penerimaan/muzakki`
+4. `Rekonsiliasi` → `/penerimaan/rekonsiliasi`
+5. `Laporan` → `/penerimaan/laporan`
+
+Pengaturan kanal, rekening, threshold, integrasi, role, dan audit berada di dropdown profil atau submenu Laporan; tidak menambah item navbar.
+
+## Core Workflow
+
+### Digital transaction
+
+```text
+Provider/portal → webhook signature + idempotency → normalisasi
+→ cari/buat Muzakki → duplicate/risk check → Menunggu Validasi
+→ validasi Staff → approval Kepala jika flag/nominal besar
+→ rekonsiliasi → Posted → kuitansi + agregasi Penyaluran
+```
+
+### Manual transaction
+
+```text
+Staff membuat draft → upload bukti → validasi kelengkapan
+→ validasi Staff → approval Kepala → rekonsiliasi → Posted
+```
+
+### Cash/pick-up batch
+
+```text
+Staff mencatat penerimaan → batch setoran → bukti serah-terima
+→ setoran kas/rekening → rekonsiliasi nominal → Kepala menutup batch → Posted
+```
+
+Status canonical:
+
+`Masuk`, `Menunggu Validasi`, `Terverifikasi`, `Menunggu Approval`, `Menunggu Rekonsiliasi`, `Terekonsiliasi`, `Posted`, `Ditolak`, `Duplikat`, `Data Tidak Lengkap`, `Perlu Klarifikasi`, `Dispute`, `Dibatalkan`.
+
+## File Map
+
+### Frontend files
+
+- `frontend-next/app/(penerimaan)/penerimaan/page.tsx` — dashboard route.
+- `frontend-next/app/(penerimaan)/penerimaan/transaksi/page.tsx` — transaction list.
+- `frontend-next/app/(penerimaan)/penerimaan/transaksi/baru/page.tsx` — manual transaction form.
+- `frontend-next/app/(penerimaan)/penerimaan/transaksi/[id]/page.tsx` — transaction detail.
+- `frontend-next/app/(penerimaan)/penerimaan/muzakki/page.tsx` — donor list/profile.
+- `frontend-next/app/(penerimaan)/penerimaan/rekonsiliasi/page.tsx` — matching workspace.
+- `frontend-next/app/(penerimaan)/penerimaan/laporan/page.tsx` — report builder/export.
+- `frontend-next/components/penerimaan/PenerimaanTopNav.tsx` — five-item nav and profile menu.
+- `frontend-next/components/penerimaan/dashboard/PenerimaanDashboard.tsx` — dashboard composition.
+- `frontend-next/components/penerimaan/transaksi/TransactionWorkspace.tsx` — filters/table/drawer.
+- `frontend-next/components/penerimaan/transaksi/TransactionForm.tsx` — four-step form.
+- `frontend-next/components/penerimaan/muzakki/MuzakkiWorkspace.tsx` — list and profile.
+- `frontend-next/components/penerimaan/rekonsiliasi/ReconciliationWorkspace.tsx` — matching/batch close.
+- `frontend-next/components/penerimaan/laporan/ReportWorkspace.tsx` — preview and export.
+- `frontend-next/components/penerimaan/shared/StatusBadge.tsx` — canonical status visual.
+- `frontend-next/components/penerimaan/shared/RoleActionGuard.tsx` — role-aware action helper.
+- `frontend-next/lib/api/penerimaan.ts` — typed API methods.
+- `frontend-next/lib/api/types.ts` — Penerimaan types and status unions.
+
+### Backend files
+
+- `server/index.js` — route registration, auth middleware, webhook endpoint.
+- `server/repository.js` — PostgreSQL queries and transaction boundaries.
+- `server/schema.sql` — canonical tables and indexes.
+- `server/penerimaan-service.js` — normalization, risk, status transitions, idempotency.
+- `server/penerimaan-permissions.js` — Staff/Leader/Admin rules.
+- `server/penerimaan-export.js` — PDF/Excel job generation.
+- `server/webhook-verification.js` — provider signature verification.
+
+### Tests
+
+- `frontend-next/components/penerimaan/**/*.test.tsx`
+- `frontend-next/lib/api/penerimaan.test.ts`
+- `server/penerimaan-permissions.test.js`
+- `server/penerimaan-service.test.js`
+- `server/penerimaan-routes.integration.test.js`
+- `server/penerimaan-reconciliation.test.js`
+- `server/penerimaan-export.test.js`
+
+## Implementation Tasks
+
+### Task 1 — Inventory and freeze legacy penerimaan
+
+Files: inspect `frontend-next/app`, `frontend-next/components`, `server`, `server/schema.sql`, and `server/seed_data.js` for existing penerimaan artifacts.
+
+- [ ] Record every legacy route, component, endpoint, table, and seed record in `PENERIMAAN_LEGACY_INVENTORY.txt`.
+- [ ] Add a route-level feature flag so old pages are read-only during migration.
+- [ ] Do not delete any legacy file in this task.
+- [ ] Test: `rg -n -i "penerimaan|muzakki|pengumpulan" frontend-next server` and verify inventory is complete.
+- [ ] Commit: `chore(penerimaan): inventory and freeze legacy module`.
+
+### Task 2 — Define domain types and status machine
+
+Files: modify `frontend-next/lib/api/types.ts`; create `server/penerimaan-service.js` and `server/penerimaan-service.test.js`.
+
+- [ ] Add strict types for `PenerimaanTransaction`, `Muzakki`, `PenerimaanChannel`, `ReconciliationBatch`, `ApprovalRecord`, and `PenerimaanStatus`.
+- [ ] Implement `validateTransition({ currentStatus, action, actor, transaction })` returning `{ allowed, nextStatus, reason }`.
+- [ ] Enforce the canonical statuses and reject unknown transitions.
+- [ ] Test every allowed transition plus invalid transitions and reversal of posted records.
+- [ ] Run: `node --test server/penerimaan-service.test.js`.
+- [ ] Commit: `feat(penerimaan): define transaction domain and status machine`.
+
+### Task 3 — Database schema and indexes
+
+Files: modify `server/schema.sql`; modify `server/db.js` migration registration; add `server/penerimaan-schema.test.js`.
+
+- [ ] Add tables for transactions, raw webhook events, channels, accounts, reconciliation batches, statement lines, matches, approvals, receipts, import jobs, and audit events.
+- [ ] Store money as integer minor units or bigint; store timezone-aware timestamps.
+- [ ] Add unique constraints for provider/channel/reference idempotency.
+- [ ] Add indexes for status, transaction date, channel, donor, batch, and approval queue.
+- [ ] Ensure migration is additive and rerunnable.
+- [ ] Test migration on PostgreSQL test database and verify constraints.
+- [ ] Commit: `feat(penerimaan): add postgres schema and indexes`.
+
+### Task 4 — Permission and approval policy
+
+Files: create `server/penerimaan-permissions.js`; create `server/penerimaan-permissions.test.js`; modify `server/access-policy.js` only for route role mapping.
+
+- [ ] Implement `resolvePenerimaanAuthority(user)` for `admin`, `penerimaan/staff`, and `penerimaan/leader`.
+- [ ] Implement `requiresLeaderApproval(transaction, settings)` for manual, flagged, duplicate, incomplete, or amount >= threshold.
+- [ ] Prevent a leader from approving a transaction whose `created_by_id` equals the actor id.
+- [ ] Allow Admin bypass while still writing audit events.
+- [ ] Run: `node --test server/penerimaan-permissions.test.js server/penyaluran-permissions.test.js`.
+- [ ] Commit: `feat(penerimaan): enforce role and approval policy`.
+
+### Task 5 — Typed frontend API client
+
+Files: create `frontend-next/lib/api/penerimaan.ts`; modify `frontend-next/lib/api/client.ts`; add `frontend-next/lib/api/penerimaan.test.ts`.
+
+- [ ] Add typed methods for dashboard, transactions, manual create, import, validation, approval, rejection, Muzakki, reconciliation, reports, export, channels, and audit.
+- [ ] Reuse existing auth token and `ApiError` behavior.
+- [ ] Use cursor pagination for transaction and audit lists.
+- [ ] Test request paths, payloads, error mapping, and export Blob handling.
+- [ ] Run: `cd frontend-next; npm test -- --run lib/api/penerimaan.test.ts --maxWorkers=1`.
+- [ ] Commit: `feat(penerimaan): add typed api client`.
+
+### Task 6 — App shell and navigation
+
+Files: create `frontend-next/app/(penerimaan)/penerimaan/layout.tsx`, `frontend-next/components/penerimaan/PenerimaanTopNav.tsx`, and tests.
+
+- [ ] Implement five menu items only: Beranda, Transaksi, Muzakki, Rekonsiliasi, Laporan.
+- [ ] Put settings under profile dropdown.
+- [ ] Use Manrope, consistent spacing, active state, keyboard focus, and responsive collapse.
+- [ ] Hide menu items not allowed by division while preserving direct-route backend protection.
+- [ ] Test active route, mobile menu, keyboard navigation, and role visibility.
+- [ ] Commit: `feat(penerimaan): add responsive app shell`.
+
+### Task 7 — Dashboard
+
+Files: create `PenerimaanDashboard.tsx`, dashboard route, dashboard tests.
+
+- [ ] Add period filter: 7 hari, 30 hari, 1 tahun, custom range.
+- [ ] Add KPI cards: total, validated, pending, approval queue, Muzakki, average transaction, target attainment, exceptions.
+- [ ] Add charts: daily/monthly trend, Zakat/Infak/Sedekah mix, channel mix, actual vs target.
+- [ ] Add action queue linking directly to the required task.
+- [ ] Add recent activity and top channels without leaving excessive whitespace.
+- [ ] Test period query, empty state, error state, role-specific action links, and responsive layout.
+- [ ] Commit: `feat(penerimaan): build collection dashboard`.
+
+### Task 8 — Transaction workspace and manual intake
+
+Files: create `frontend-next/components/penerimaan/transaksi/TransactionWorkspace.tsx`, `TransactionForm.tsx`, transaction list/detail/new routes and tests; add typed API methods; modify `server/index.js`, `server/penerimaan-service.js`, and `server/repository.js`.
+
+- **Completed in commit `9394189`:** transaction list/detail workspace, cursor filters, desktop drawer, mobile detail route, manual intake form, draft resume, evidence upload, bulk validation, mutation workflow, role-aware actions, audit, and tests are complete.
+- [x] Build searchable/filterable transaction workspace with period, type, channel, status, amount, risk, and action-needed filters.
+- [x] Use desktop table plus mobile cards; use a desktop detail drawer and full-page mobile detail view with source, Muzakki, amount, proof, flags, timeline, and role-aware actions.
+- [x] Build the four-step manual flow: sumber, Muzakki, nilai/alokasi, bukti; support draft resume, evidence upload, integer amount validation, and reference uniqueness.
+- [x] Add the remaining mutation endpoints (`POST /transaksi/manual`, `/transaksi/bukti`, `/:id/validate`, `/:id/approve`, `/:id/reject`, `/:id/request-clarification`, `/:id/resolve-clarification`, and `/:id/reverse`) and connect role-aware actions; enforce permission policy, expected version, self-approval prevention, and immutable audit in one database transaction.
+- [x] Test pagination, filters, draft resume, upload failures, Staff/Leader/Admin actions, HTTP 409 stale updates, and focus restoration. Do not close this compressed Task 8 until the `baru` route and `TransactionForm.tsx` exist and pass tests.
+- [x] Commit: `feat(penerimaan): add transaction workspace and intake workflow`.
+
+### Task 9 — Muzakki, approval UX, and audit trail
+
+Files: create `frontend-next/components/penerimaan/muzakki/MuzakkiWorkspace.tsx`, route, tests; extend `server/index.js`, `server/repository.js`, and audit queries.
+
+- [x] Support individual, institution/company, and anonymous profiles with masked PII by role.
+- [x] Show contribution history, total, frequency, preferred channel, receipts, internal notes, and links back to transactions.
+- [x] Provide duplicate suggestions and explicit merge confirmation; preserve the primary record and write the merge audit event.
+- [x] Add role-aware decision UI: Staff operational actions, Leader approval only for eligible transactions, Admin bypass/recovery with audit reason.
+- [x] Expose immutable audit history with actor, role, previous status, next status, reason, timestamp, and correlation id.
+- [x] Test profile search/history, anonymous privacy, duplicate merge, self-approval rejection, audit immutability, and mobile behavior.
+- [x] Commit: `feat(penerimaan): add Muzakki and accountable decisions`.
+
+### Task 10 — Ingestion and reconciliation
+
+Files: create `server/webhook-verification.js`, `frontend-next/components/penerimaan/rekonsiliasi/ReconciliationWorkspace.tsx`, reconciliation route; modify service/repository/index; add integration tests.
+
+- **Final verification:** import parsing remains outside the critical section, while batch re-read, statement inserts, total update, audit, and auto-match now execute under one batch lock and database transaction. Forced mid-import rollback, deterministic import-vs-close serialization, and values beyond `Number.MAX_SAFE_INTEGER` are covered. Full suite: 145/145 backend tests and 161/161 frontend tests pass; TypeScript and the Next.js production build are clean.
+- [x] Add signed webhook ingestion per channel, persist raw payload before normalization, enforce provider event/reference idempotency, and expose retry state for failures.
+- [x] Add CSV/XLSX import jobs with row-level error reports and partial-import safety; parse outside the lock if needed, but perform batch re-read (`FOR UPDATE`), inserts, expected-total update, audit, and auto-match inside one batch lock and database transaction.
+- [x] Build bank/QRIS/settlement reconciliation with exact and confidence-based matching by reference, amount, and date; use integer-safe arithmetic consistently and pass DB-bound BIGINT totals as exact strings/integers rather than converting them to unsafe JavaScript `Number`.
+- [x] Support manual match, split, merge, variance notes, cash/pick-up handover, physical count, and batch close; unmatch must remove the complete split/merge match group without leaving an unbalanced partial relationship.
+- [x] Require Leader/Admin to close a batch and make closed batches immutable.
+- [x] Test signatures, duplicates, malformed payloads, retry, partial import, exact/partial match, variance, permissions, closed-batch immutability, unbalanced amounts, cross-batch unmatch isolation, duplicate IDs, concurrent match-vs-match, concurrent match-vs-close, lock-map cleanup, forced mid-import rollback, and deterministic import-vs-close serialization.
+- [x] Security gate: verify the exact raw HTTP request bytes before JSON parsing; production rejects missing or forbidden default webhook secrets.
+- [x] Workflow gate: auto/manual matching only accepts `Menunggu Rekonsiliasi` transactions.
+- [x] Consistency gate: import mutations are atomic and batch-serialized; lock-map cleanup, exact DB-bound totals, duplicate-ID rejection, rollback/savepoint cleanup, and concurrency invariants all pass.
+- [x] Completeness gate: split/merge endpoints, balance checks, group-level unmatch, and deterministic concurrency tests exist; remaining money/lock lifecycle gates are fully closed.
+- [x] Final Task 10 commit after the import atomicity/serialization and exact DB-bound money gates pass.
+
+### Task 11 — Reporting, settings, and cross-division integration
+
+Files: create `frontend-next/components/penerimaan/laporan/ReportWorkspace.tsx`, report route, `server/penerimaan-export.js`; modify settings/profile menu, portal callback adapter, and Penyaluran aggregation; add tests.
+
+- [x] Add report builder for period, fund type, channel, account, Muzakki, campaign, manual, exception, reconciliation, and audit views.
+- [x] Generate authorized PDF via PDFKit and XLSX via ExcelJS with filtered preview, totals, generated-by, timestamp, freshness, and export job status.
+- [x] Admin manages channels, accounts, approval threshold, fund categories, and provider configuration; validate positive thresholds and audit every change.
+- [x] Prevent disabling channels with unsettled transactions and prevent reports from crossing division boundaries.
+- [x] Map successful public portal payments to signed ingestion; expose only `Posted` aggregates to Penyaluran and exclude pending/rejected/disputed funds.
+- [x] Test export content/types, empty and large reports, permission boundaries, settings lifecycle, duplicate callbacks, delayed callbacks, and posted-only aggregation.
+- [x] Commit: `feat(penerimaan): add reports settings and integration`.
+
+### Task 12 — Cutover, hardening, and production deployment
+
+Files: legacy files in `PENERIMAAN_LEGACY_INVENTORY.txt`, migration scripts, navbar routing, `.github/workflows/deploy.yml`, `deploy/release-vps.sh`, health checks, and runbook.
+
+- [ ] Compare migrated totals by date, fund type, channel, and status; keep a read-only legacy snapshot for one rollback window.
+- [ ] Switch all direct links and navigation to `/penerimaan`; remove old routes/components/seeds only after Tasks 1–11 pass.
+- [ ] Verify no active legacy references remain with `rg -n -i "legacy-penerimaan|old-penerimaan-route"`.
+- [ ] Run backend tests, frontend tests, typecheck, production build, and `git diff --check`.
+- [ ] Deploy the exact Git SHA, confirm required API variables without committing secrets, and verify VPS commit, PM2, PostgreSQL health, public HTTP 200, webhook health, and export smoke test.
+- [ ] Document rollback to the previous known-good SHA and fail closed on PostgreSQL or required secret failure.
+- [ ] Commit: `chore(penerimaan): cut over harden and deploy`.
+
+## Required Verification Commands
+
+Run from repository root:
+
+```powershell
+cd frontend-next
+npm test -- --maxWorkers=1
+npm run typecheck
+npm run build
+cd ..
+node --test server/*.test.js
+git diff --check
+git status --short
+```
+
+Before any production claim, verify:
+
+```powershell
+ssh -i C:\Users\xrunc\.ssh\id_ed25519 -o ConnectTimeout=10 -o BatchMode=yes xruncy@103.189.235.61 "git -C /home/xruncy/repo rev-parse HEAD; pm2 status --no-color; curl -fsS http://127.0.0.1:3001/api/health"
+curl.exe -fsSI https://muhammadrofiq.my.id/penerimaan
+```
+
+## Acceptance Criteria
+
+- Staff can receive, validate, reconcile, and submit transactions without seeing forbidden approval actions.
+- Kepala Bagian can approve only eligible transactions and cannot approve their own submissions.
+- Admin can manage channels, accounts, threshold, roles, and recovery actions.
+- Digital, manual, cash, and pick-up flows have visible statuses and audit history.
+- Posted totals reconcile with source data and are available to Penyaluran only after posting.
+- PDF, Excel, and CSV exports match active filters and permissions.
+- No old penerimaan route remains active after cutover.
+- Desktop, tablet, and mobile layouts remain usable without forced horizontal text wrapping.
+- PostgreSQL failure causes an unhealthy service, never demo/SQLite fallback.
+
+## Execution Rule for Antigravity
+
+Implement one task at a time. For every task: write failing tests first, run the focused test to observe failure, implement the smallest change, run focused plus relevant regression tests, inspect the diff, then commit. Stop and report if a task changes the domain contract or requires a new product decision; do not silently expand scope.
