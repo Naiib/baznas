@@ -45,9 +45,9 @@ export { penerimaanApi };
 // On server SSR, use internal port 3001
 export const getApiBase = () => {
   if (typeof window !== 'undefined') {
-    // If running in browser on localhost with a custom API port, allow NEXT_PUBLIC_API_BASE_URL only if local
-    if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && process.env.NEXT_PUBLIC_API_BASE_URL) {
-      return process.env.NEXT_PUBLIC_API_BASE_URL;
+    // On localhost in browser, default to backend port 3001 if no custom env is set
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
     }
     return '';
   }
