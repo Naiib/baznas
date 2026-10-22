@@ -418,7 +418,10 @@ export async function initDb(options = {}) {
   const migrationsDir = configuredMigrationsDir || path.resolve(__dirname, 'migrations');
   const p0Enabled = process.env.PENYALURAN_P0_ENABLED === 'true';
   if (p0Enabled && !isPostgres) {
-    throw new Error('P0_MIGRATIONS_REQUIRE_POSTGRES');
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('P0_MIGRATIONS_REQUIRE_POSTGRES');
+    }
+    console.warn('⚠ SQLite active: P0 PostgreSQL migrations are bypassed in local SQLite development mode.');
   }
 
   try {

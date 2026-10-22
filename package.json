@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:portal": "npm --prefix frontend-next run dev",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
