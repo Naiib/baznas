@@ -53,3 +53,10 @@ editorial-layout.tar.gz
 frontend-next-*.tar.gz
 hero-polish.tar.gz
 impact-signal-hero.tar.gz
+
+# Personal records and unreviewed source forms are intentionally excluded from this import.
+/Data/
+# Multica-generated task context sidecars
+/.multica/
+/.agent_context/
+AGENTS.md

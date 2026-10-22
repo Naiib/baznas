@@ -11,24 +11,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const testDbUrl = process.env.P0_TEST_DATABASE_URL || 'postgresql://postgres@127.0.0.1:55439/baznas_m1_legacy_test';
-assertDisposableTestDatabaseUrl(testDbUrl);
+const testDbUrl = process.env.P0_TEST_DATABASE_URL;
+if (testDbUrl) {
+  assertDisposableTestDatabaseUrl(testDbUrl);
+}
 
-const parsedUrl = new URL(testDbUrl);
-const pgPort = parsedUrl.port || 5432;
-const pgHost = parsedUrl.hostname || '127.0.0.1';
-const pgUser = parsedUrl.username || 'postgres';
-const rootUrl = `postgresql://${pgUser}@${pgHost}:${pgPort}/postgres`;
+const parsedUrl = testDbUrl ? new URL(testDbUrl) : null;
+const pgPort = parsedUrl?.port || 5432;
+const pgHost = parsedUrl?.hostname || '127.0.0.1';
+const pgUser = parsedUrl?.username || 'postgres';
+const rootUrl = parsedUrl ? `postgresql://${pgUser}@${pgHost}:${pgPort}/postgres` : '';
 
 const liveDbName = 'baznas_m1_forced_fail_live_test';
 const backupDbName = 'baznas_m1_forced_fail_backup_test';
 const failedDbName = 'baznas_m1_forced_fail_retained_test';
-const configuredDbName = decodeURIComponent(parsedUrl.pathname.replace(/^\/+/, ''));
+const configuredDbName = parsedUrl ? decodeURIComponent(parsedUrl.pathname.replace(/^\/+/, '')) : '';
 const templateDbName = /legacy_test$/i.test(configuredDbName)
   ? configuredDbName
   : (process.env.P0_LEGACY_TEMPLATE_DB || 'baznas_m1_legacy_test');
 
-test('live PostgreSQL 16: forced mid-migration failure triggers two-step database rename rollback and backend reconnect', async () => {
+test('live PostgreSQL 16: forced mid-migration failure triggers two-step database rename rollback and backend reconnect', { skip: !process.env.P0_TEST_DATABASE_URL }, async () => {
   const rootPool = new pg.Pool({ connectionString: rootUrl });
   rootPool.on('error', () => {});
 

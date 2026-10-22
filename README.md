@@ -172,11 +172,11 @@ node scripts/m6-uat-verification.js
 node --test server/program-overview-stats.test.js server/auth.test.js server/auth-db.test.js server/users.test.js server/mustahik-read-model.test.js server/reports.test.js server/penerimaan-routes.test.js server/rbac-guard.test.js server/mustahik-mutations.test.js server/penyaluran-p0-auth.test.js server/penyaluran-p0-audit.test.js server/penyaluran-p0-artifacts.test.js server/penyaluran-p0-workspace.test.js server/penyaluran-p0-migration-runner.test.js server/penyaluran-p0-receipt-jobs.test.js server/penyaluran-p0-e2e.test.js server/migration-parity.test.js
 
 # Suite Next.js frontend (380 tests)
-npm --prefix frontend-next test
+npm --prefix frontend test
 
 # Typecheck & Webpack production build Next.js
-npm --prefix frontend-next run typecheck
-npm --prefix frontend-next run build
+npm --prefix frontend run typecheck
+npm --prefix frontend run build
 ```
 
 ## Development Commands
@@ -191,19 +191,6 @@ npm run preview             # Preview build production
 npm run p0:migration:dry-run # Analisis dry-run migrasi P0
 npm run p0:migration:run    # Eksekusi migrasi skema P0
 ```
-
-## Otomatisasi & Sinkronisasi Workspace (MKA-132)
-
-Repository ini dilengkapi paket sinkronisasi workspace on-demand (fetch-only):
-```bash
-./scripts/sync_baznas_repo.sh --check-only .
-./scripts/sync_baznas_repo.sh --json .
-./tests/test_sync_baznas_repo.sh
-```
-Dokumentasi teknis sinkronisasi dan panduan setup:
-- `docs/WORKSPACE_AND_LAPTOP_SETUP.md`: setup, penggunaan, dan batas recovery.
-- `docs/DIAGNOSTIC_AND_AUDIT_REPORT.md`: riwayat audit konektivitas.
-- `docs/LIVE_INTEGRATION_VERIFICATION.md`: catatan verifikasi live integrasi.
 
 ## Lisensi
 

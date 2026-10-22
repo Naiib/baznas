@@ -877,7 +877,7 @@ test('global cutover freeze blocks creation, import, and upload with zero side e
     };
 
     const publicFormData = new FormData();
-    const publicBlob = new Blob(['sample public application document bytes'], { type: 'application/pdf' });
+    const publicBlob = new Blob(['%PDF-1.4\nsample public application document bytes\n%%EOF\n'], { type: 'application/pdf' });
     publicFormData.append('ktp', publicBlob, 'sample_ktp.pdf');
     publicFormData.append('name', 'Budi Santoso');
     publicFormData.append('nik', '3671012345670001');

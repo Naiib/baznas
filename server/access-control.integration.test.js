@@ -323,7 +323,8 @@ test('public tracking sanitizes caller correlation ID to prevent PII injection',
 
 test('keeps a valid public application submission available without a session', async () => {
   const form = new FormData();
-  form.set('ktp', new Blob(['%PDF-1.7'], { type: 'application/pdf' }), 'identity.pdf');
+  form.set('name', 'Budi Santoso');
+  form.set('ktp', new Blob(['%PDF-1.7\n1 0 obj\n<<>>\nendobj\nstartxref\n0\n%%EOF\n'], { type: 'application/pdf' }), 'identity.pdf');
 
   const response = await request('/api/public/pengajuan', { method: 'POST', body: form });
   assert.equal(response.status, 201);
@@ -340,7 +341,7 @@ test('rejects unsupported upload MIME types on the public application route', as
   assert.equal(response.status, 422);
   assert.deepEqual(await response.json(), {
     success: false,
-    message: 'Jenis file tidak didukung. Gunakan PDF, JPEG, atau PNG.',
+    message: 'Jenis file tidak didukung untuk berkas "evidence.txt". Gunakan PDF, JPEG, atau PNG.',
   });
 });
 

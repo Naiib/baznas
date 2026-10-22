@@ -77,14 +77,19 @@ test('Reporting: query synchronization, multi-dimensional filters, and summary K
   const db = await getDb();
   const staffToken = tokenFor({ id: 51, role: 'penerimaan', level: 'staff' });
 
+  const now = Date.now();
+  const dayMs = 86400000;
+  const isoDate = (daysAgo) => new Date(now - daysAgo * dayMs).toISOString();
+  const dateOnly = (daysAgo) => new Date(now - daysAgo * dayMs).toISOString().slice(0, 10);
+
   // Insert seed transactions across various fund types, channels, and statuses
   const txData = [
-    { num: 'TRX-REP-01', ref: 'REP-01', fund: 'zakat', channel: 'bank_transfer', amt: 5000000, status: 'Posted', manual: 0, flag: 0, date: '2026-09-02T10:00:00Z', muzakki: 'H. Bambang Zakat' },
-    { num: 'TRX-REP-02', ref: 'REP-02', fund: 'infak', channel: 'qris', amt: 1000000, status: 'Posted', manual: 0, flag: 0, date: '2026-09-03T11:00:00Z', muzakki: 'Hj. Siti Infak' },
-    { num: 'TRX-REP-03', ref: 'REP-03', fund: 'sedekah', channel: 'tunai', amt: 250000, status: 'Posted', manual: 1, flag: 0, date: '2026-09-04T12:00:00Z', muzakki: 'Donatur Tunai' },
-    { num: 'TRX-REP-04', ref: 'REP-04', fund: 'zakat', channel: 'bank_transfer', amt: 15000000, status: 'Menunggu Approval', manual: 0, flag: 1, date: '2026-09-05T13:00:00Z', muzakki: 'PT Maju Zakat' },
-    { num: 'TRX-REP-05', ref: 'REP-05', fund: 'wakaf', channel: 'bank_transfer', amt: 50000000, status: 'Menunggu Rekonsiliasi', manual: 0, flag: 0, date: '2026-09-06T14:00:00Z', muzakki: 'Wakif Dermawan' },
-    { num: 'TRX-REP-06', ref: 'REP-06', fund: 'infak', channel: 'portal_web', amt: 500000, status: 'Ditolak', manual: 0, flag: 1, date: '2026-09-07T15:00:00Z', muzakki: 'Donatur Ditolak' },
+    { num: 'TRX-REP-01', ref: 'REP-01', fund: 'zakat', channel: 'bank_transfer', amt: 5000000, status: 'Posted', manual: 0, flag: 0, date: isoDate(6), muzakki: 'H. Bambang Zakat' },
+    { num: 'TRX-REP-02', ref: 'REP-02', fund: 'infak', channel: 'qris', amt: 1000000, status: 'Posted', manual: 0, flag: 0, date: isoDate(5), muzakki: 'Hj. Siti Infak' },
+    { num: 'TRX-REP-03', ref: 'REP-03', fund: 'sedekah', channel: 'tunai', amt: 250000, status: 'Posted', manual: 1, flag: 0, date: isoDate(4), muzakki: 'Donatur Tunai' },
+    { num: 'TRX-REP-04', ref: 'REP-04', fund: 'zakat', channel: 'bank_transfer', amt: 15000000, status: 'Menunggu Approval', manual: 0, flag: 1, date: isoDate(3), muzakki: 'PT Maju Zakat' },
+    { num: 'TRX-REP-05', ref: 'REP-05', fund: 'wakaf', channel: 'bank_transfer', amt: 50000000, status: 'Menunggu Rekonsiliasi', manual: 0, flag: 0, date: isoDate(2), muzakki: 'Wakif Dermawan' },
+    { num: 'TRX-REP-06', ref: 'REP-06', fund: 'infak', channel: 'portal_web', amt: 500000, status: 'Ditolak', manual: 0, flag: 1, date: isoDate(1), muzakki: 'Donatur Ditolak' },
   ];
 
   for (const t of txData) {
@@ -136,7 +141,9 @@ test('Reporting: query synchronization, multi-dimensional filters, and summary K
   assert.equal(dataRisk.preview_transactions.every((t) => Boolean(t.is_flagged)), true);
 
   // 6. Custom date range filter
-  const resCustom = await request('/api/penerimaan/laporan?period=custom&start_date=2026-09-02&end_date=2026-09-04', { token: staffToken });
+  const startDate = dateOnly(6);
+  const endDate = dateOnly(4);
+  const resCustom = await request(`/api/penerimaan/laporan?period=custom&start_date=${startDate}&end_date=${endDate}`, { token: staffToken });
   assert.equal(resCustom.status, 200);
   const dataCustom = (await resCustom.json()).data;
   assert.ok(dataCustom.preview_transactions.length >= 3);

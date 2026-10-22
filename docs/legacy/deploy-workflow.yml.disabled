@@ -1,0 +1,73 @@
+name: Validate and Deploy BAZNAS
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: Type yes to request the reviewed production deployment
+        required: true
+        type: choice
+        options:
+          - no
+          - yes
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Validate backend with the required full suite
+        run: |
+          npm ci
+          timeout 15m node --test --test-concurrency=1 server/*.test.js
+
+      - name: Validate frontend
+        working-directory: frontend-next
+        run: |
+          npm ci
+          npm run typecheck
+          npm test -- --maxWorkers=1
+          npm run build
+
+      - name: Validate deployment contract
+        run: node --test deploy/release-vps.test.js
+
+  deploy:
+    needs: validate
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'yes' && needs.validate.result == 'success' }}
+    environment: production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure VPS SSH trust
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy reviewed commit on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes "$VPS_USERNAME@$VPS_HOST" \
+            "git -C /home/xruncy/repo fetch --no-tags origin main && git -C /home/xruncy/repo show $TARGET_SHA:deploy/release-vps.sh | bash -s -- $TARGET_SHA"

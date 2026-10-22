@@ -173,8 +173,9 @@ async function publicServer(t, p0) {
   t.after(async () => {
     await new Promise((resolve) => server.close(resolve));
     if (!p0) {
+      const legacyUploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
       const files = await db.pool.query('SELECT filename FROM documents');
-      for (const row of files.rows) await fs.rm(path.join(process.env.UPLOAD_DIR, row.filename), { force: true });
+      for (const row of files.rows) await fs.rm(path.join(legacyUploadDir, row.filename), { force: true });
     }
     await db.pool.end();
     await fs.rm(uploadDir, { recursive: true, force: true });
@@ -189,7 +190,7 @@ async function publicServer(t, p0) {
     requestNumber += 1;
     return fetch(`http://127.0.0.1:${server.address().port}/api/public/pengajuan`, { method: 'POST', headers: { 'X-Forwarded-For': `192.0.2.${requestNumber}` }, body });
   };
-  return { db, uploadDir: p0 ? uploadDir : process.env.UPLOAD_DIR, submit };
+  return { db, uploadDir: p0 ? uploadDir : path.resolve(process.env.UPLOAD_DIR || './uploads'), submit };
 }
 
 function sizedPdf(size, name = 'dokumen.pdf') {

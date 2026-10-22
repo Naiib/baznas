@@ -222,8 +222,8 @@ test('Gap 3: Report filters use exact account_id, numeric program_id, program_se
       fund_type, amount, fee_amount, net_amount, payment_method, transaction_date,
       status, is_manual, account_id, program_id
     ) VALUES
-      ('TRX-REV-001', 'REV-1', 'bank_transfer', 'digital', 'Muzakki A', 'zakat_maal', 1000000, 0, 1000000, 'bank_transfer', '2026-09-01T00:00:00Z', 'Posted', 0, 1, 10),
-      ('TRX-REV-002', 'REV-2', 'bank_transfer', 'digital', 'Muzakki B', 'infak', 2000000, 0, 2000000, 'bank_transfer', '2026-09-01T00:00:00Z', 'Posted', 0, 2, 20)
+      ('TRX-REV-001', 'REV-1', 'bank_transfer', 'digital', 'Muzakki A', 'zakat_maal', 1000000, 0, 1000000, 'bank_transfer', CURRENT_TIMESTAMP, 'Posted', 0, 1, 10),
+      ('TRX-REV-002', 'REV-2', 'bank_transfer', 'digital', 'Muzakki B', 'infak', 2000000, 0, 2000000, 'bank_transfer', CURRENT_TIMESTAMP, 'Posted', 0, 2, 20)
   `);
 
   // Filter by exact account_id = 1
@@ -556,7 +556,9 @@ test('Gap 12: Report freshness is derived from stored records, not wall-clock ti
   assert.notEqual(summary.meta.data_freshness, 'Real-time', 'Cannot be hardcoded Real-time');
 
   if (summary.meta.data_freshness) {
-    const maxRow = await db.get('SELECT MAX(updated_at) as max_updated FROM penerimaan_transactions');
+    const { buildPenerimaanReportFilterQuery } = await import('./penerimaan-report-query.js');
+    const { whereSql, values } = buildPenerimaanReportFilterQuery({ period: '30d' }, '');
+    const maxRow = await db.get(`SELECT MAX(updated_at) as max_updated FROM penerimaan_transactions ${whereSql}`, values);
     if (maxRow?.max_updated) {
       assert.equal(new Date(summary.meta.data_freshness).toISOString(), new Date(maxRow.max_updated).toISOString());
     }

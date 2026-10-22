@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const scriptPath = new URL('./release-vps.sh', import.meta.url);
-const workflowPath = new URL('../.github/workflows/deploy.yml', import.meta.url);
+const workflowPath = new URL('../docs/legacy/deploy-workflow.yml.disabled', import.meta.url);
+const activeWorkflowPath = new URL('../.github/workflows/deploy.yml', import.meta.url);
 const scriptFsPath = fileURLToPath(scriptPath);
 const bashScriptPath = process.platform === 'win32'
   ? `/${scriptFsPath[0].toLowerCase()}${scriptFsPath.slice(2).replaceAll('\\', '/')}`
@@ -31,7 +32,7 @@ test('VPS release script builds deterministic dependencies and verifies both ser
   assert.match(script, /git reset --hard "\$TARGET_SHA"/);
   assert.match(script, /npm ci/);
   assert.match(script, /npm run build/);
-  assert.match(script, /frontend-next[\s\S]*npm ci/);
+  assert.match(script, /npm ci --prefix frontend/);
   assert.match(script, /npm run build/);
   assert.match(script, /pm2 restart baznas-frontend-next/);
   assert.match(script, /NODE_ENV=production pm2 restart baznas-backend/);
@@ -114,7 +115,8 @@ test('Webhook smoke checker behaviorally accepts only safe rejection responses',
   }
 });
 
-test('GitHub workflow is manual, approval-gated, and blocks deploy on the full backend suite', () => {
+test('legacy deployment workflow is archived and cannot trigger GitHub Actions', () => {
+  assert.equal(fs.existsSync(activeWorkflowPath), false, 'the archive must not contain an active deploy workflow');
   const workflow = fs.readFileSync(workflowPath, 'utf8');
 
   assert.doesNotMatch(workflow, /push:/);

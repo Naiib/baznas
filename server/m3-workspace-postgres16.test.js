@@ -6,7 +6,8 @@ import { getP0CaseWorkspace } from './penyaluran-p0/case-read-model.js';
 const { Pool } = pg;
 
 function requireM3TestDatabaseUrl() {
-  const dbUrl = process.env.M3_TEST_DATABASE_URL || 'postgresql://postgres@127.0.0.1:55439/baznas_m3_m1_m4_workspace_20260926_test';
+  const dbUrl = process.env.M3_TEST_DATABASE_URL;
+  if (!dbUrl) return null;
   const parsed = new URL(dbUrl);
   const databaseName = decodeURIComponent(parsed.pathname.replace(/^\/+/, ''));
   if (!['postgres:', 'postgresql:'].includes(parsed.protocol) || parsed.hostname !== '127.0.0.1' || parsed.port !== '55439' || !/^baznas_m3_[a-z0-9_]+_test$/i.test(databaseName)) {
@@ -15,7 +16,7 @@ function requireM3TestDatabaseUrl() {
   return dbUrl;
 }
 
-test('live PostgreSQL 16: getP0CaseWorkspace returns server-truth read model and enforces safety contracts', async () => {
+test('live PostgreSQL 16: getP0CaseWorkspace returns server-truth read model and enforces safety contracts', { skip: !process.env.M3_TEST_DATABASE_URL }, async () => {
   const dbUrl = requireM3TestDatabaseUrl();
   const pool = new Pool({ connectionString: dbUrl });
 

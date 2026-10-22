@@ -200,12 +200,8 @@ rollback() {
     cd "$REPO_DIR"
     git reset --hard "$PREVIOUS_SHA"
     npm ci
+    npm ci --prefix frontend
     npm run build
-    (
-      cd frontend-next
-      npm ci
-      npm run build
-    )
     restart_services
     pm2 save
   fi
@@ -232,12 +228,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   git reset --hard "$TARGET_SHA"
 
   npm ci
+  npm ci --prefix frontend
   npm run build
-  (
-    cd frontend-next
-    npm ci
-    npm run build
-  )
 
   restart_services
   run_smoke_checks
