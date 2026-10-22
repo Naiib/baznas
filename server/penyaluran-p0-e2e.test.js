@@ -77,6 +77,7 @@ async function ensureE2eSchema(db) {
     'ALTER TABLE mustahik ADD COLUMN kabupaten_kota TEXT',
     'ALTER TABLE mustahik ADD COLUMN province TEXT',
     'ALTER TABLE mustahik ADD COLUMN approved_amount NUMERIC',
+    'ALTER TABLE mustahik ADD COLUMN recommended_amount NUMERIC DEFAULT 0',
     'ALTER TABLE mustahik ADD COLUMN mpzis_date TEXT',
     'ALTER TABLE mustahik ADD COLUMN asnaf TEXT',
     'ALTER TABLE mustahik ADD COLUMN fund_source TEXT',

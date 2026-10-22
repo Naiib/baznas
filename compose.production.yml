@@ -92,7 +92,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend-next
+      context: ./frontend
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ${NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:-}

@@ -19,7 +19,7 @@
   frontend:
     container_name: baznas-frontend
     build:
-      context: ./frontend-next
+      context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     network_mode: "host"

@@ -34,7 +34,7 @@ export const KNOWN_INSECURE_KEYS = Object.freeze([
  * @returns {Buffer} 32-byte key Buffer
  */
 export function getProviderSecretEncryptionKey() {
-  let envKey = process.env.PENERIMAAN_PROVIDER_SECRET_ENCRYPTION_KEY;
+  const envKey = process.env.PENERIMAAN_PROVIDER_SECRET_ENCRYPTION_KEY;
   if (!envKey || typeof envKey !== 'string' || !envKey.trim()) {
     if (process.env.NODE_ENV === 'test') {
       const err = new Error('PENERIMAAN_PROVIDER_SECRET_ENCRYPTION_KEY must be explicitly set in test environment.');
@@ -46,21 +46,19 @@ export function getProviderSecretEncryptionKey() {
       err.status = 500;
       throw err;
     }
-    // Safe dev fallback so local development never crashes
-    envKey = 'f52cf7ebe6d4f5ac8c2db2629c1acafc0141d8cd5ae21ef0ce120ead9ecacd63';
+    const err = new Error('PENERIMAAN_PROVIDER_SECRET_ENCRYPTION_KEY is required in deployed environment.');
+    err.status = 500;
+    throw err;
   }
 
-  let trimmed = envKey.trim();
+  const trimmed = envKey.trim();
   if (process.env.NODE_ENV !== 'test') {
     if (KNOWN_INSECURE_KEYS.includes(trimmed.toLowerCase())) {
-      if (process.env.NODE_ENV === 'production') {
-        const err = new Error(
-          'PENERIMAAN_PROVIDER_SECRET_ENCRYPTION_KEY menggunakan kunci contoh atau kunci tidak aman yang diketahui. Harap konfigurasikan kunci acak 32-byte (64 karakter hex) yang aman.'
-        );
-        err.status = 500;
-        throw err;
-      }
-      trimmed = 'f52cf7ebe6d4f5ac8c2db2629c1acafc0141d8cd5ae21ef0ce120ead9ecacd63';
+      const err = new Error(
+        'PENERIMAAN_PROVIDER_SECRET_ENCRYPTION_KEY menggunakan kunci contoh atau kunci tidak aman yang diketahui. Harap konfigurasikan kunci acak 32-byte (64 karakter hex) yang aman.'
+      );
+      err.status = 500;
+      throw err;
     }
   }
 

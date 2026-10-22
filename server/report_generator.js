@@ -11,7 +11,7 @@ function getLogoPath() {
   const candidates = [
     path.join(__dirname, 'assets', 'baznas-logo.png'),
     path.join(__dirname, '..', 'public', 'baznas-logo.png'),
-    path.join(__dirname, '..', 'frontend-next', 'public', 'baznas-logo.png'),
+    path.join(__dirname, '..', 'frontend', 'public', 'baznas-logo.png'),
     path.join(process.cwd(), 'public', 'baznas-logo.png'),
   ];
   for (const c of candidates) {

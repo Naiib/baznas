@@ -198,7 +198,7 @@ test('authenticated download denies a real directory-junction escape', async () 
 });
 
 test('Nginx proxies uploads to the authenticated backend instead of serving an alias', () => {
-  const configPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../frontend-next/deploy/nginx-muhammadrofiq-next.conf');
+  const configPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../frontend/deploy/nginx-muhammadrofiq-next.conf');
   const config = fs.readFileSync(configPath, 'utf8');
   const uploadsBlock = config.match(/location \^~ \/uploads\/ \{([\s\S]*?)\n    \}/)?.[1] || '';
   assert.match(uploadsBlock, /proxy_pass http:\/\/127\.0\.0\.1:3001\/uploads\//);

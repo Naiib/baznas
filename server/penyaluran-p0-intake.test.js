@@ -254,8 +254,10 @@ test('concurrent distinct idempotency keys create distinct server file numbers',
 test('legacy file suffix collision allocates the next free canonical number', async (t) => {
   const db = await database();
   t.after(() => db.pool.end());
-  await db.run("INSERT INTO mustahik (file_no,name,status,workflow_version,workflow_mode) VALUES ('MST-202609-0002','Legacy','Diajukan',0,'legacy')");
+  const now = new Date();
+  const currentPrefix = `MST-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-`;
+  await db.run(`INSERT INTO mustahik (file_no,name,status,workflow_version,workflow_mode) VALUES ('${currentPrefix}0002','Legacy','Diajukan',0,'legacy')`);
   const result = await createP0Mustahik(payload(), { db, actor }, meta('legacy-collision'));
-  assert.equal(result.data.file_no, 'MST-202609-0003');
+  assert.equal(result.data.file_no, `${currentPrefix}0003`);
   assert.equal(Number((await db.get('SELECT COUNT(*) AS count FROM mustahik')).count), 2);
 });

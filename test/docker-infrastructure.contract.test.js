@@ -74,7 +74,7 @@ test('Docker Infrastructure Contract: Compose and Dockerfiles validation', async
 
 test('Dockerfiles security contract', async (t) => {
   const backendDockerfile = path.join(WORKTREE_ROOT, 'Dockerfile.backend');
-  const frontendDockerfile = path.join(WORKTREE_ROOT, 'frontend-next', 'Dockerfile');
+  const frontendDockerfile = path.join(WORKTREE_ROOT, 'frontend', 'Dockerfile');
 
   await t.test('Backend Dockerfile does not copy .env files into image', () => {
     assert.ok(fs.existsSync(backendDockerfile), 'Dockerfile.backend must exist');

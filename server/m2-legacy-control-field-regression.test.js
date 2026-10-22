@@ -9,8 +9,10 @@ import { requireProductionSecret } from './access-policy.js';
 import { assertDisposableTestDatabaseUrl } from './penyaluran-p0/migration-runner.js';
 import app from './index.js';
 
-const testDbUrl = process.env.M2_TEST_DATABASE_URL || 'postgresql://postgres@127.0.0.1:55439/baznas_m2_migrated_test';
-assertDisposableTestDatabaseUrl(testDbUrl);
+const testDbUrl = process.env.M2_TEST_DATABASE_URL;
+if (testDbUrl) {
+  assertDisposableTestDatabaseUrl(testDbUrl);
+}
 
 const JWT_SECRET = requireProductionSecret();
 const adminToken = jwt.sign({ id: 1, email: 'admin@baznas.go.id', role: 'admin', level: 'admin', division: 'IT' }, JWT_SECRET);
@@ -54,7 +56,7 @@ function startServer(expressApp) {
   });
 }
 
-test('live PostgreSQL 16: createMustahik and updateMustahik reject/ignore P0 control columns', async () => {
+test('live PostgreSQL 16: createMustahik and updateMustahik reject/ignore P0 control columns', { skip: !process.env.M2_TEST_DATABASE_URL }, async () => {
   const pool = new pg.Pool({ connectionString: testDbUrl });
   await pool.query("INSERT INTO users (id, name, email, password_hash, role, level, division, is_active) VALUES (1, 'Admin', 'admin@baznas.go.id', 'dummy_hash', 'admin', 'admin', 'IT', TRUE) ON CONFLICT (id) DO NOTHING;");
   const db = createDbAdapter(pool);
@@ -116,7 +118,7 @@ test('live PostgreSQL 16: createMustahik and updateMustahik reject/ignore P0 con
   }
 });
 
-test('live PostgreSQL 16: HTTP POST & PUT /api/mustahik sanitize and ignore control fields', async () => {
+test('live PostgreSQL 16: HTTP POST & PUT /api/mustahik sanitize and ignore control fields', { skip: !process.env.M2_TEST_DATABASE_URL }, async () => {
   const pool = new pg.Pool({ connectionString: testDbUrl });
   await pool.query("INSERT INTO users (id, name, email, password_hash, role, level, division, is_active) VALUES (1, 'Admin', 'admin@baznas.go.id', 'dummy_hash', 'admin', 'admin', 'IT', TRUE) ON CONFLICT (id) DO NOTHING;");
   const db = createDbAdapter(pool);

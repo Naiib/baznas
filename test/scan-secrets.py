@@ -10,9 +10,9 @@ patterns = [
 files_to_check = [
     'compose.production.yml',
     'Dockerfile.backend',
-    'frontend-next/Dockerfile',
+    'frontend/Dockerfile',
     '.dockerignore',
-    'frontend-next/.dockerignore',
+    'frontend/.dockerignore',
     'server/secrets.js',
     'server/secrets.test.js',
     'deploy/docker/Caddyfile',
